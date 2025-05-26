@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { 
   Box, 
   Paper, 
@@ -46,58 +46,12 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
 
-  const handleDateSelect = (date: Date | null) => {
-    setSelectedDate(date);
-    const existingRecord = records.find(
-      record => isSameDay(record.date, date!)
-    );
-    
-    if (existingRecord) {
-      setAmount(existingRecord.amount.toString());
-      setNotes(existingRecord.notes || '');
-    } else {
-      setAmount('');
-      setNotes('');
-    }
-    setIsDialogOpen(true);
-  };
-
-  const handleSave = () => {
-    if (!selectedDate || !amount) return;
-
-    const record: Omit<IncomeRecord, 'id'> = {
-      date: selectedDate,
-      amount: parseFloat(amount),
-      notes,
-      driverId: '1', // TODO: Implementar selección de conductor
-    };
-
-    const existingRecord = records.find(
-      r => isSameDay(r.date, selectedDate)
-    );
-
-    if (existingRecord) {
-      onEditRecord({ ...record, id: existingRecord.id });
-    } else {
-      onAddRecord(record);
-    }
-
-    setIsDialogOpen(false);
-  };
-
-  const handleAddNonWorkingDay = () => {
-    if (selectedDate) {
-      onAddNonWorkingDay(selectedDate);
-      setIsDialogOpen(false);
-    }
-  };
-
-  const getDayIncome = (date: Date) => {
+  const getDayIncome = useCallback((date: Date) => {
     const record = records.find(r => isSameDay(r.date, date));
     return record ? record.amount : 0;
-  };
+  }, [records]);
 
-  const isNonWorkingDay = (date: Date) => {
+  const isNonWorkingDay = useCallback((date: Date) => {
     const dayConfig = workDaysConfig.find(config => config.dayOfWeek === date.getDay());
     const isSpecificNonWorkingDay = nonWorkingDays.some(nwd => 
       nwd.date.getFullYear() === date.getFullYear() &&
@@ -105,9 +59,9 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
       nwd.date.getDate() === date.getDate()
     );
     return !dayConfig?.isWorkDay || isSpecificNonWorkingDay;
-  };
+  }, [workDaysConfig, nonWorkingDays]);
 
-  const renderDay = (props: PickersDayProps<Date>) => {
+  const renderDay = useCallback((props: PickersDayProps<Date>) => {
     const { day, selected, ...other } = props;
     const hasIncome = getDayIncome(day);
     const nonWorking = isNonWorkingDay(day);
@@ -158,7 +112,53 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
         )}
       </Box>
     );
-  };
+  }, [getDayIncome, isNonWorkingDay]);
+
+  const handleDateSelect = useCallback((date: Date | null) => {
+    setSelectedDate(date);
+    const existingRecord = records.find(
+      record => isSameDay(record.date, date!)
+    );
+    
+    if (existingRecord) {
+      setAmount(existingRecord.amount.toString());
+      setNotes(existingRecord.notes || '');
+    } else {
+      setAmount('');
+      setNotes('');
+    }
+    setIsDialogOpen(true);
+  }, [records]);
+
+  const handleSave = useCallback(() => {
+    if (!selectedDate || !amount) return;
+
+    const record: Omit<IncomeRecord, 'id'> = {
+      date: selectedDate,
+      amount: parseFloat(amount),
+      notes,
+      driverId: '1',
+    };
+
+    const existingRecord = records.find(
+      r => isSameDay(r.date, selectedDate)
+    );
+
+    if (existingRecord) {
+      onEditRecord({ ...record, id: existingRecord.id });
+    } else {
+      onAddRecord(record);
+    }
+
+    setIsDialogOpen(false);
+  }, [selectedDate, amount, notes, records, onEditRecord, onAddRecord]);
+
+  const handleAddNonWorkingDay = useCallback(() => {
+    if (selectedDate) {
+      onAddNonWorkingDay(selectedDate);
+      setIsDialogOpen(false);
+    }
+  }, [selectedDate, onAddNonWorkingDay]);
 
   return (
     <Box sx={{ p: { xs: 1, sm: 2 } }}>

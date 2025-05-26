@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Container, Box, Tabs, Tab } from '@mui/material';
 import { IncomeCalendar } from '../components/IncomeCalendar';
 import { WorkDaysConfig } from '../components/WorkDaysConfig';
@@ -30,63 +30,12 @@ export const Dashboard: React.FC = () => {
   const [records, setRecords] = useState<IncomeRecord[]>(getIncomeRecords());
   const [nonWorkingDays, setNonWorkingDays] = useState<NonWorkingDay[]>(getNonWorkingDays());
   const [workDaysConfig, setWorkDaysConfig] = useState<WorkDayConfig[]>(getWorkDaysConfig());
-  const [monthlyStats, setMonthlyStats] = useState<MonthlyStats>({
-    totalIncome: 0,
-    averageDailyIncome: 0,
-    totalWorkDays: 0,
-    incomeByDay: {}
-  });
   const [selectedMonth, setSelectedMonth] = useState(new Date());
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
-  const handleMonthChange = (date: Date) => {
-    setSelectedMonth(date);
-    calculateStats(date);
-  };
-
-  const handleAddRecord = (record: Omit<IncomeRecord, 'id'>) => {
-    const newRecord: IncomeRecord = {
-      ...record,
-      id: Date.now().toString(),
-    };
-    const updatedRecords = [...records, newRecord];
-    setRecords(updatedRecords);
-    saveIncomeRecords(updatedRecords);
-    calculateStats(selectedMonth);
-  };
-
-  const handleEditRecord = (record: IncomeRecord) => {
-    const updatedRecords = records.map(r =>
-      r.id === record.id ? record : r
-    );
-    setRecords(updatedRecords);
-    saveIncomeRecords(updatedRecords);
-    calculateStats(selectedMonth);
-  };
-
-  const handleConfigChange = (newConfig: WorkDayConfig[]) => {
-    setWorkDaysConfig(newConfig);
-    saveWorkDaysConfig(newConfig);
-    calculateStats(selectedMonth);
-  };
-
-  const handleAddNonWorkingDay = (date: Date) => {
-    const newNonWorkingDay: NonWorkingDay = {
-      id: Date.now().toString(),
-      date: date
-    };
-    const updatedNonWorkingDays = [...nonWorkingDays, newNonWorkingDay];
-    setNonWorkingDays(updatedNonWorkingDays);
-    saveNonWorkingDays(updatedNonWorkingDays);
-    calculateStats(selectedMonth);
-  };
-
-  const calculateStats = (targetMonth: Date) => {
-    const firstDayOfMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
-    const lastDayOfMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0, 23, 59, 59, 999);
+  // Memoizar los cálculos de estadísticas
+  const monthlyStats = useMemo(() => {
+    const firstDayOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
+    const lastDayOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0, 23, 59, 59, 999);
 
     const monthlyRecords = records.filter(record => {
       const recordDate = new Date(record.date);
@@ -117,19 +66,54 @@ export const Dashboard: React.FC = () => {
       }
     }
 
-    const newStats = {
+    return {
       totalIncome,
       averageDailyIncome: totalWorkDays > 0 ? totalIncome / totalWorkDays : 0,
       totalWorkDays,
       incomeByDay,
     };
-    
-    setMonthlyStats(newStats);
-  };
+  }, [records, workDaysConfig, nonWorkingDays, selectedMonth]);
 
-  useEffect(() => {
-    calculateStats(selectedMonth);
+  const handleTabChange = useCallback((event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
   }, []);
+
+  const handleMonthChange = useCallback((date: Date) => {
+    setSelectedMonth(date);
+  }, []);
+
+  const handleAddRecord = useCallback((record: Omit<IncomeRecord, 'id'>) => {
+    const newRecord: IncomeRecord = {
+      ...record,
+      id: Date.now().toString(),
+    };
+    const updatedRecords = [...records, newRecord];
+    setRecords(updatedRecords);
+    saveIncomeRecords(updatedRecords);
+  }, [records]);
+
+  const handleEditRecord = useCallback((record: IncomeRecord) => {
+    const updatedRecords = records.map(r =>
+      r.id === record.id ? record : r
+    );
+    setRecords(updatedRecords);
+    saveIncomeRecords(updatedRecords);
+  }, [records]);
+
+  const handleConfigChange = useCallback((newConfig: WorkDayConfig[]) => {
+    setWorkDaysConfig(newConfig);
+    saveWorkDaysConfig(newConfig);
+  }, []);
+
+  const handleAddNonWorkingDay = useCallback((date: Date) => {
+    const newNonWorkingDay: NonWorkingDay = {
+      id: Date.now().toString(),
+      date: date
+    };
+    const updatedNonWorkingDays = [...nonWorkingDays, newNonWorkingDay];
+    setNonWorkingDays(updatedNonWorkingDays);
+    saveNonWorkingDays(updatedNonWorkingDays);
+  }, [nonWorkingDays]);
 
   return (
     <Container maxWidth="lg">

@@ -30,7 +30,11 @@ export const saveIncomeRecords = (records: IncomeRecord[]): void => {
 };
 
 export const getIncomeRecords = (): IncomeRecord[] => {
-  return getFromStorage(STORAGE_KEYS.INCOME_RECORDS, []);
+  const records = getFromStorage<(Omit<IncomeRecord, 'date'> & { date: string })[]>(STORAGE_KEYS.INCOME_RECORDS, []);
+  return records.map(record => ({
+    ...record,
+    date: new Date(record.date)
+  }));
 };
 
 export const saveWorkDaysConfig = (config: WorkDayConfig[]): void => {
