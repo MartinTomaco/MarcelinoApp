@@ -244,7 +244,7 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
           {selectedDate ? format(selectedDate, 'dd/MM/yyyy', { locale: es }) : ''}
         </DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 2 }}>
+          <Stack spacing={2} sx={{ mt: 2, mb: 4 }}>
             <TextField
               autoFocus
               label="Monto"
@@ -273,7 +273,14 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
             )}
           </Stack>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ 
+          position: 'sticky',
+          bottom: 0,
+          backgroundColor: 'background.paper',
+          borderTop: 1,
+          borderColor: 'divider',
+          p: 2
+        }}>
           {selectedDate && records.find(r => isSameDay(r.date, selectedDate)) && (
             <Button 
               onClick={handleDelete} 
