@@ -17,7 +17,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { MonthlyStats } from '../types';
-import { format, addMonths, subMonths } from 'date-fns';
+import { format, addMonths, subMonths, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
@@ -43,7 +43,7 @@ export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, onMonthChange }
   };
 
   const chartData = Object.entries(stats.incomeByDay).map(([date, amount]) => ({
-    date: format(new Date(date), 'dd/MM', { locale: es }),
+    date: format(parseISO(date), 'dd/MM', { locale: es }),
     amount,
   }));
 

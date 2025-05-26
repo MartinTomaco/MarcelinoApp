@@ -12,6 +12,7 @@ import {
   getNonWorkingDays,
   saveNonWorkingDays
 } from '../services/localStorage';
+import { format } from 'date-fns';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -35,11 +36,12 @@ export const Dashboard: React.FC = () => {
   // Memoizar los cálculos de estadísticas
   const monthlyStats = useMemo(() => {
     const firstDayOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
-    const lastDayOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0, 23, 59, 59, 999);
+    const lastDayOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0);
 
     const monthlyRecords = records.filter(record => {
       const recordDate = new Date(record.date);
-      return recordDate >= firstDayOfMonth && recordDate <= lastDayOfMonth;
+      return recordDate.getMonth() === selectedMonth.getMonth() && 
+             recordDate.getFullYear() === selectedMonth.getFullYear();
     });
 
     const incomeByDay: { [key: string]: number } = {};
@@ -47,7 +49,7 @@ export const Dashboard: React.FC = () => {
     let totalWorkDays = 0;
 
     monthlyRecords.forEach(record => {
-      const dateStr = new Date(record.date).toISOString().split('T')[0];
+      const dateStr = format(record.date, 'yyyy-MM-dd');
       incomeByDay[dateStr] = (incomeByDay[dateStr] || 0) + record.amount;
       totalIncome += record.amount;
     });
