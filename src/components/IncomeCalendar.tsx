@@ -238,13 +238,12 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
       <Dialog 
         open={isDialogOpen} 
         onClose={() => setIsDialogOpen(false)}
-        fullScreen={isMobile}
       >
         <DialogTitle>
           {selectedDate ? format(selectedDate, 'dd/MM/yyyy', { locale: es }) : ''}
         </DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 2, mb: 4 }}>
+          <Stack spacing={2} sx={{ mt: 2 }}>
             <TextField
               autoFocus
               label="Monto"
@@ -273,14 +272,7 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
             )}
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ 
-          position: 'sticky',
-          bottom: 0,
-          backgroundColor: 'background.paper',
-          borderTop: 1,
-          borderColor: 'divider',
-          p: 2
-        }}>
+        <DialogActions>
           {selectedDate && records.find(r => isSameDay(r.date, selectedDate)) && (
             <Button 
               onClick={handleDelete} 
