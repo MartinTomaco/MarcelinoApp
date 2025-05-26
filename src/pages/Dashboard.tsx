@@ -107,15 +107,31 @@ export const Dashboard: React.FC = () => {
     saveWorkDaysConfig(newConfig);
   }, []);
 
-  const handleAddNonWorkingDay = useCallback((date: Date) => {
+  const handleAddNonWorkingDay = (date: Date) => {
     const newNonWorkingDay: NonWorkingDay = {
-      id: Date.now().toString(),
+      id: `nwd-${date.getTime()}`,
       date: date
     };
     const updatedNonWorkingDays = [...nonWorkingDays, newNonWorkingDay];
     setNonWorkingDays(updatedNonWorkingDays);
     saveNonWorkingDays(updatedNonWorkingDays);
-  }, [nonWorkingDays]);
+  };
+
+  const handleRemoveNonWorkingDay = (date: Date) => {
+    const updatedNonWorkingDays = nonWorkingDays.filter(nwd => 
+      !(nwd.date.getFullYear() === date.getFullYear() &&
+        nwd.date.getMonth() === date.getMonth() &&
+        nwd.date.getDate() === date.getDate())
+    );
+    setNonWorkingDays(updatedNonWorkingDays);
+    saveNonWorkingDays(updatedNonWorkingDays);
+  };
+
+  const handleDeleteRecord = useCallback((recordId: string) => {
+    const updatedRecords = records.filter(r => r.id !== recordId);
+    setRecords(updatedRecords);
+    saveIncomeRecords(updatedRecords);
+  }, [records]);
 
   return (
     <Container maxWidth="lg">
@@ -133,7 +149,9 @@ export const Dashboard: React.FC = () => {
             nonWorkingDays={nonWorkingDays}
             onAddRecord={handleAddRecord}
             onEditRecord={handleEditRecord}
+            onDeleteRecord={handleDeleteRecord}
             onAddNonWorkingDay={handleAddNonWorkingDay}
+            onRemoveNonWorkingDay={handleRemoveNonWorkingDay}
           />
         </TabPanel>
 

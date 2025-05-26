@@ -20,6 +20,7 @@ import { es } from 'date-fns/locale';
 import { IncomeRecord, WorkDayConfig, NonWorkingDay } from '../types';
 import AddIcon from '@mui/icons-material/Add';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
 
 interface IncomeCalendarProps {
@@ -28,7 +29,9 @@ interface IncomeCalendarProps {
   nonWorkingDays: NonWorkingDay[];
   onAddRecord: (record: Omit<IncomeRecord, 'id'>) => void;
   onEditRecord: (record: IncomeRecord) => void;
+  onDeleteRecord: (recordId: string) => void;
   onAddNonWorkingDay: (date: Date) => void;
+  onRemoveNonWorkingDay: (date: Date) => void;
 }
 
 export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
@@ -37,7 +40,9 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
   nonWorkingDays,
   onAddRecord,
   onEditRecord,
+  onDeleteRecord,
   onAddNonWorkingDay,
+  onRemoveNonWorkingDay,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -153,12 +158,35 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
     setIsDialogOpen(false);
   }, [selectedDate, amount, notes, records, onEditRecord, onAddRecord]);
 
-  const handleAddNonWorkingDay = useCallback(() => {
+  const handleToggleNonWorkingDay = useCallback(() => {
     if (selectedDate) {
-      onAddNonWorkingDay(selectedDate);
+      const isNonWorking = nonWorkingDays.some(nwd => 
+        nwd.date.getFullYear() === selectedDate.getFullYear() &&
+        nwd.date.getMonth() === selectedDate.getMonth() &&
+        nwd.date.getDate() === selectedDate.getDate()
+      );
+
+      if (isNonWorking) {
+        onRemoveNonWorkingDay(selectedDate);
+      } else {
+        onAddNonWorkingDay(selectedDate);
+      }
       setIsDialogOpen(false);
     }
-  }, [selectedDate, onAddNonWorkingDay]);
+  }, [selectedDate, nonWorkingDays, onAddNonWorkingDay, onRemoveNonWorkingDay]);
+
+  const handleDelete = useCallback(() => {
+    if (!selectedDate) return;
+    
+    const existingRecord = records.find(
+      r => isSameDay(r.date, selectedDate)
+    );
+
+    if (existingRecord) {
+      onDeleteRecord(existingRecord.id);
+      setIsDialogOpen(false);
+    }
+  }, [selectedDate, records, onDeleteRecord]);
 
   return (
     <Box sx={{ p: { xs: 1, sm: 2 } }}>
@@ -227,19 +255,28 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
-            {selectedDate && !isNonWorkingDay(selectedDate) && (
+            {selectedDate && (
               <Button
                 startIcon={<EventBusyIcon />}
-                onClick={handleAddNonWorkingDay}
+                onClick={handleToggleNonWorkingDay}
                 variant="outlined"
-                color="secondary"
+                color={isNonWorkingDay(selectedDate) ? "success" : "secondary"}
               >
-                Marcar como día no laborable
+                {isNonWorkingDay(selectedDate) ? "Marcar como día laborable" : "Marcar como día no laborable"}
               </Button>
             )}
           </Stack>
         </DialogContent>
         <DialogActions>
+          {selectedDate && records.find(r => isSameDay(r.date, selectedDate)) && (
+            <Button 
+              onClick={handleDelete} 
+              color="error" 
+              startIcon={<DeleteIcon />}
+            >
+              Eliminar
+            </Button>
+          )}
           <Button onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
           <Button onClick={handleSave} variant="contained">
             Guardar
