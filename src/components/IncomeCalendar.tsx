@@ -97,6 +97,8 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
             '&:hover': {
               backgroundColor: nonWorking ? 'grey.300' : undefined,
             },
+            position: 'relative',
+            zIndex: 2,
           }}
         />
         {hasIncome > 0 && (
@@ -110,6 +112,7 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
               color: 'success.main',
               fontWeight: 'bold',
               fontSize: '0.7rem',
+              zIndex: 1,
             }}
           >
             ${hasIncome}
@@ -156,6 +159,7 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
     }
 
     setIsDialogOpen(false);
+    setSelectedDate(null);
   }, [selectedDate, amount, notes, records, onEditRecord, onAddRecord]);
 
   const handleToggleNonWorkingDay = useCallback(() => {
@@ -172,6 +176,7 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
         onAddNonWorkingDay(selectedDate);
       }
       setIsDialogOpen(false);
+      setSelectedDate(null);
     }
   }, [selectedDate, nonWorkingDays, onAddNonWorkingDay, onRemoveNonWorkingDay]);
 
@@ -185,6 +190,7 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
     if (existingRecord) {
       onDeleteRecord(existingRecord.id);
       setIsDialogOpen(false);
+      setSelectedDate(null);
     }
   }, [selectedDate, records, onDeleteRecord]);
 
