@@ -238,6 +238,20 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
       <Dialog 
         open={isDialogOpen} 
         onClose={() => setIsDialogOpen(false)}
+        sx={{
+          '& .MuiDialog-container': {
+            alignItems: 'flex-start',
+          },
+        }}
+        PaperProps={{
+          sx: {
+            borderTop: '4px solid',
+            borderLeft: '4px solid',
+            borderRight: '4px solid',
+            borderColor: 'divider',
+            borderRadius: 2,
+          }
+        }}
       >
         <DialogTitle>
           {selectedDate ? format(selectedDate, 'dd/MM/yyyy', { locale: es }) : ''}
