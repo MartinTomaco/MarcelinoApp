@@ -70,24 +70,34 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
     const { day, selected, ...other } = props;
     const hasIncome = getDayIncome(day);
     const nonWorking = isNonWorkingDay(day);
+    const record = records.find(r => isSameDay(r.date, day));
+    const hasNotes = record?.notes && record.notes.trim().length > 0;
     
     return (
       <Box
         sx={{
           position: 'relative',
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            bottom: 2,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 4,
-            height: 4,
-            borderRadius: '50%',
-            backgroundColor: hasIncome ? 'success.main' : 'transparent',
-          },
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
         }}
       >
+        {hasNotes && (
+          <Box
+            sx={{
+              width: 4,
+              height: 4,
+              borderRadius: '50%',
+              backgroundColor: 'warning.main',
+              position: 'absolute',
+              top: 2,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 1,
+            }}
+            aria-hidden="true"
+          />
+        )}
         <PickersDay
           {...other}
           day={day}
@@ -118,9 +128,25 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
             ${hasIncome}
           </Typography>
         )}
+        {hasIncome > 0 && (
+          <Box
+            sx={{
+              width: 4,
+              height: 4,
+              borderRadius: '50%',
+              backgroundColor: 'success.main',
+              position: 'absolute',
+              bottom: 2,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 1,
+            }}
+            aria-hidden="true"
+          />
+        )}
       </Box>
     );
-  }, [getDayIncome, isNonWorkingDay]);
+  }, [getDayIncome, isNonWorkingDay, records]);
 
   const handleDateSelect = useCallback((date: Date | null) => {
     setSelectedDate(date);
