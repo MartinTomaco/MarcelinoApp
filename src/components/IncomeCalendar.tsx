@@ -22,6 +22,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
+import { PickersCalendarHeader } from '@mui/x-date-pickers/PickersCalendarHeader';
 
 interface IncomeCalendarProps {
   records: IncomeRecord[];
@@ -228,6 +229,9 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
             '& .MuiPickersDay-root.Mui-selected': {
               backgroundColor: 'primary.main',
             },
+            '& .MuiPickersCalendarHeader-label': {
+              textTransform: 'capitalize'
+            }
           }}
           slots={{
             day: renderDay

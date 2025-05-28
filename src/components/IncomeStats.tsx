@@ -42,10 +42,12 @@ export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, onMonthChange }
     onMonthChange?.(newDate);
   };
 
-  const chartData = Object.entries(stats.incomeByDay).map(([date, amount]) => ({
-    date: format(parseISO(date), 'dd/MM', { locale: es }),
-    amount,
-  }));
+  const chartData = Object.entries(stats.incomeByDay)
+    .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
+    .map(([date, amount]) => ({
+      date: format(parseISO(date), 'dd/MM', { locale: es }),
+      amount,
+    }));
 
   return (
     <Box sx={{ p: 2 }}>
@@ -59,7 +61,7 @@ export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, onMonthChange }
               <ArrowBackIosNewIcon />
             </IconButton>
             <Typography variant="h6">
-              {format(currentDate, 'MMMM yyyy', { locale: es })}
+              {format(currentDate, 'MMMM yyyy', { locale: es }).replace(/^\w/, c => c.toUpperCase())}
             </Typography>
             <IconButton onClick={handleNextMonth} size="small">
               <ArrowForwardIosIcon />
