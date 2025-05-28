@@ -18,7 +18,6 @@ import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { format, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { IncomeRecord, WorkDayConfig, NonWorkingDay } from '../types';
-import AddIcon from '@mui/icons-material/Add';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
@@ -209,13 +208,6 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
           <Typography variant="h5">
             Calendario de Ingresos
           </Typography>
-          <IconButton 
-            color="primary" 
-            onClick={() => setIsDialogOpen(true)}
-            sx={{ display: { sm: 'none' } }}
-          >
-            <AddIcon />
-          </IconButton>
         </Stack>
 
         <DateCalendar

@@ -15,6 +15,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  TooltipProps,
 } from 'recharts';
 import { MonthlyStats } from '../types';
 import { format, addMonths, subMonths, parseISO } from 'date-fns';
@@ -26,6 +27,26 @@ interface IncomeStatsProps {
   stats: MonthlyStats;
   onMonthChange?: (date: Date) => void;
 }
+
+const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <Paper elevation={3} sx={{ p: 1.5 }}>
+        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+          {data.dayOfWeek}
+        </Typography>
+        <Typography variant="body2">
+          {data.date}
+        </Typography>
+        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+          ${data.amount.toLocaleString()}
+        </Typography>
+      </Paper>
+    );
+  }
+  return null;
+};
 
 export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, onMonthChange }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -44,10 +65,14 @@ export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, onMonthChange }
 
   const chartData = Object.entries(stats.incomeByDay)
     .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
-    .map(([date, amount]) => ({
-      date: format(parseISO(date), 'dd/MM', { locale: es }),
-      amount,
-    }));
+    .map(([date, amount]) => {
+      const parsedDate = parseISO(date);
+      return {
+        date: format(parsedDate, 'dd/MM', { locale: es }),
+        dayOfWeek: format(parsedDate, 'EEEE', { locale: es }).replace(/^\w/, c => c.toUpperCase()),
+        amount,
+      };
+    });
 
   return (
     <Box sx={{ p: 2 }}>
@@ -69,7 +94,7 @@ export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, onMonthChange }
           </Stack>
         </Stack>
         
-        <Grid container spacing={3}>
+        <Grid container spacing={2} mb={4}>
           <Grid item xs={12} md={4}>
             <Paper sx={{ p: 2, textAlign: 'center' }}>
               <Typography variant="h6">Ingreso Total</Typography>
@@ -104,7 +129,7 @@ export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, onMonthChange }
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />
-              <Tooltip />
+              <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="amount" fill="#1976d2" />
             </BarChart>
           </ResponsiveContainer>
