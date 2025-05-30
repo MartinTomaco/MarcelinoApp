@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Container, Box, Tabs, Tab } from '@mui/material';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { IncomeCalendar } from '../components/IncomeCalendar';
 import { WorkDaysConfig } from '../components/WorkDaysConfig';
 import { IncomeStats } from '../components/IncomeStats';
@@ -144,10 +145,21 @@ export const Dashboard: React.FC = () => {
       paddingRight: 0
     }}>
       <Box sx={{ width: '100%', mt: 4 }}>
-        <Tabs value={tabValue} onChange={handleTabChange}>
+        <Tabs 
+          value={tabValue} 
+          onChange={handleTabChange}
+          sx={{
+            '& .MuiTabs-flexContainer': {
+              justifyContent: 'space-between'
+            },
+            '& .MuiTab-root:last-child': {
+              marginLeft: 'auto'
+            }
+          }}
+        >
           <Tab label="Calendario" />
           <Tab label="Estadísticas" />
-          <Tab label="Configuración" />
+          <Tab icon={<SettingsIcon />} />
         </Tabs>
 
         <TabPanel value={tabValue} index={0}>
