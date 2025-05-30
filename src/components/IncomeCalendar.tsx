@@ -230,7 +230,7 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
           overflow: 'hidden'
         }}
       >
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+        <Stack direction="row" justifyContent={{ xs: 'center', sm: 'space-between' }} alignItems="center" mb={2} mt={2} ml={{ sm: 2 }}>
           <Typography variant="h5">
             Calendario de Ingresos
           </Typography>

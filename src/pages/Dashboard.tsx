@@ -134,7 +134,15 @@ export const Dashboard: React.FC = () => {
   }, [records]);
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="lg" sx={{ 
+      width: '100%',
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      boxSizing: 'border-box',
+      display: 'block',
+      paddingLeft: 0,
+      paddingRight: 0
+    }}>
       <Box sx={{ width: '100%', mt: 4 }}>
         <Tabs value={tabValue} onChange={handleTabChange}>
           <Tab label="Calendario" />
