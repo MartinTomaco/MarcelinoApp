@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Container, Box, Tabs, Tab } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
+import SwipeableViews from 'react-swipeable-views';
 import { IncomeCalendar } from '../components/IncomeCalendar';
 import { WorkDaysConfig } from '../components/WorkDaysConfig';
 import { IncomeStats } from '../components/IncomeStats';
@@ -81,6 +82,10 @@ export const Dashboard: React.FC = () => {
     setTabValue(newValue);
   }, []);
 
+  const handleSwipeChange = useCallback((index: number) => {
+    setTabValue(index);
+  }, []);
+
   const handleMonthChange = useCallback((date: Date) => {
     setSelectedMonth(date);
   }, []);
@@ -142,50 +147,107 @@ export const Dashboard: React.FC = () => {
       boxSizing: 'border-box',
       display: 'block',
       paddingLeft: 0,
-      paddingRight: 0
+      paddingRight: 0,
+      height: '100vh',
+      overflow: 'hidden'
     }}>
-      <Box sx={{ width: '100%', mt: 4 }}>
-        <Tabs 
-          value={tabValue} 
-          onChange={handleTabChange}
-          sx={{
-            '& .MuiTabs-flexContainer': {
-              justifyContent: 'space-between'
-            },
-            '& .MuiTab-root:last-child': {
-              marginLeft: 'auto'
-            }
-          }}
-        >
-          <Tab label="Calendario" />
-          <Tab label="Estadísticas" />
-          <Tab icon={<SettingsIcon />} />
-        </Tabs>
+      <SwipeableViews
+        index={tabValue}
+        onChangeIndex={handleSwipeChange}
+        style={{ 
+          width: '100%',
+          height: '100%'
+        }}
+        containerStyle={{
+          height: '100%'
+        }}
+        slideStyle={{
+          height: '100%',
+          overflow: 'auto'
+        }}
+      >
+        <Box sx={{ height: '100%' }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange}
+            sx={{
+              '& .MuiTabs-flexContainer': {
+                justifyContent: 'space-between'
+              },
+              '& .MuiTab-root:last-child': {
+                marginLeft: 'auto'
+              }
+            }}
+          >
+            <Tab label="Calendario" />
+            <Tab label="Estadísticas" />
+            <Tab icon={<SettingsIcon />} />
+          </Tabs>
+          <Box sx={{ 
+            p: { xs: 0, sm: 3 }, 
+            height: 'calc(100% - 48px)', 
+            overflow: 'auto' 
+          }}>
+            <IncomeCalendar
+              records={records}
+              workDaysConfig={workDaysConfig}
+              nonWorkingDays={nonWorkingDays}
+              onAddRecord={handleAddRecord}
+              onEditRecord={handleEditRecord}
+              onDeleteRecord={handleDeleteRecord}
+              onAddNonWorkingDay={handleAddNonWorkingDay}
+              onRemoveNonWorkingDay={handleRemoveNonWorkingDay}
+            />
+          </Box>
+        </Box>
 
-        <TabPanel value={tabValue} index={0}>
-          <IncomeCalendar
-            records={records}
-            workDaysConfig={workDaysConfig}
-            nonWorkingDays={nonWorkingDays}
-            onAddRecord={handleAddRecord}
-            onEditRecord={handleEditRecord}
-            onDeleteRecord={handleDeleteRecord}
-            onAddNonWorkingDay={handleAddNonWorkingDay}
-            onRemoveNonWorkingDay={handleRemoveNonWorkingDay}
-          />
-        </TabPanel>
+        <Box sx={{ height: '100%' }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange}
+            sx={{
+              '& .MuiTabs-flexContainer': {
+                justifyContent: 'space-between'
+              },
+              '& .MuiTab-root:last-child': {
+                marginLeft: 'auto'
+              }
+            }}
+          >
+            <Tab label="Calendario" />
+            <Tab label="Estadísticas" />
+            <Tab icon={<SettingsIcon />} />
+          </Tabs>
+          <Box sx={{ p: 3, height: 'calc(100% - 48px)', overflow: 'auto' }}>
+            <IncomeStats stats={monthlyStats} onMonthChange={handleMonthChange} />
+          </Box>
+        </Box>
 
-        <TabPanel value={tabValue} index={1}>
-          <IncomeStats stats={monthlyStats} onMonthChange={handleMonthChange} />
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={2}>
-          <WorkDaysConfig
-            config={workDaysConfig}
-            onConfigChange={handleConfigChange}
-          />
-        </TabPanel>
-      </Box>
+        <Box sx={{ height: '100%' }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange}
+            sx={{
+              '& .MuiTabs-flexContainer': {
+                justifyContent: 'space-between'
+              },
+              '& .MuiTab-root:last-child': {
+                marginLeft: 'auto'
+              }
+            }}
+          >
+            <Tab label="Calendario" />
+            <Tab label="Estadísticas" />
+            <Tab icon={<SettingsIcon />} />
+          </Tabs>
+          <Box sx={{ p: 3, height: 'calc(100% - 48px)', overflow: 'auto' }}>
+            <WorkDaysConfig
+              config={workDaysConfig}
+              onConfigChange={handleConfigChange}
+            />
+          </Box>
+        </Box>
+      </SwipeableViews>
     </Container>
   );
 }; 
