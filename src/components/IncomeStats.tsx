@@ -133,7 +133,7 @@ export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, onMonthChange }
           </Grid>
         </Grid>
 
-        <Box sx={{ height: 400, mt: 4 }}>
+        <Box sx={{ height: 400, mt: 4, mb: 4 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
