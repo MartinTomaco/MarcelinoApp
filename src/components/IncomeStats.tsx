@@ -75,8 +75,8 @@ export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, onMonthChange }
     });
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Paper elevation={3} sx={{ p: 2 }}>
+    <Box sx={{ p: { xs: 1, sm: 2 } }}>
+      <Paper elevation={3} sx={{ p: { xs: 1, sm: 2 } }}>
         <Stack direction="column" spacing={2} mb={2}>
           <Typography variant="h5">
             Estadísticas Mensuales

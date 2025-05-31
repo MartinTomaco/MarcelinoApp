@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { 
   Box, 
   Paper, 
@@ -21,8 +21,10 @@ import { IncomeRecord, WorkDayConfig, NonWorkingDay } from '../types';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
-import { PickersCalendarHeader } from '@mui/x-date-pickers/PickersCalendarHeader';
-import SwipeableViews from 'react-swipeable-views';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Virtual } from 'swiper/modules';
+import type { Swiper as SwiperType } from 'swiper';
+import 'swiper/css';
 
 interface IncomeCalendarProps {
   records: IncomeRecord[];
@@ -222,15 +224,6 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
     }
   }, [selectedDate, records, onDeleteRecord]);
 
-  const handleMonthChange = useCallback((date: Date) => {
-    setCurrentMonth(date);
-  }, []);
-
-  const handleSwipeMonth = useCallback((index: number) => {
-    const newMonth = index === 0 ? subMonths(currentMonth, 1) : addMonths(currentMonth, 1);
-    setCurrentMonth(newMonth);
-  }, [currentMonth]);
-
   return (
     <Box sx={{ p: { xs: 1, sm: 2 } }}>
       <Paper 
@@ -247,79 +240,28 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
           </Typography>
         </Stack>
 
-        <SwipeableViews
-          index={1}
-          onChangeIndex={handleSwipeMonth}
-          style={{ width: '100%' }}
-          enableMouseEvents
-        >
-          <Box>
-            <DateCalendar
-              value={selectedDate}
-              onChange={handleDateSelect}
-              sx={{
-                width: '100%',
-                '& .MuiPickersDay-root': {
-                  position: 'relative',
-                },
-                '& .MuiPickersDay-root.Mui-selected': {
-                  backgroundColor: 'primary.main',
-                },
-                '& .MuiPickersCalendarHeader-label': {
-                  textTransform: 'capitalize'
-                }
-              }}
-              slots={{
-                day: renderDay
-              }}
-              defaultValue={subMonths(currentMonth, 1)}
-            />
-          </Box>
-          <Box>
-            <DateCalendar
-              value={selectedDate}
-              onChange={handleDateSelect}
-              sx={{
-                width: '100%',
-                '& .MuiPickersDay-root': {
-                  position: 'relative',
-                },
-                '& .MuiPickersDay-root.Mui-selected': {
-                  backgroundColor: 'primary.main',
-                },
-                '& .MuiPickersCalendarHeader-label': {
-                  textTransform: 'capitalize'
-                }
-              }}
-              slots={{
-                day: renderDay
-              }}
-              defaultValue={currentMonth}
-            />
-          </Box>
-          <Box>
-            <DateCalendar
-              value={selectedDate}
-              onChange={handleDateSelect}
-              sx={{
-                width: '100%',
-                '& .MuiPickersDay-root': {
-                  position: 'relative',
-                },
-                '& .MuiPickersDay-root.Mui-selected': {
-                  backgroundColor: 'primary.main',
-                },
-                '& .MuiPickersCalendarHeader-label': {
-                  textTransform: 'capitalize'
-                }
-              }}
-              slots={{
-                day: renderDay
-              }}
-              defaultValue={addMonths(currentMonth, 1)}
-            />
-          </Box>
-        </SwipeableViews>
+        <Box sx={{ width: '100%' }}>
+          <DateCalendar
+            value={selectedDate}
+            onChange={handleDateSelect}
+            sx={{
+              width: '100%',
+              '& .MuiPickersDay-root': {
+                position: 'relative',
+              },
+              '& .MuiPickersDay-root.Mui-selected': {
+                backgroundColor: 'primary.main',
+              },
+              '& .MuiPickersCalendarHeader-label': {
+                textTransform: 'capitalize'
+              }
+            }}
+            slots={{
+              day: renderDay
+            }}
+            defaultValue={currentMonth}
+          />
+        </Box>
       </Paper>
 
       <Dialog 
