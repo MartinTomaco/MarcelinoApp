@@ -225,11 +225,19 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
   }, [selectedDate, records, onDeleteRecord]);
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 2 } }}>
+    <Box sx={{ 
+      p: 2,
+      '@media (max-width:370px)': { 
+        p: 1 
+      }
+    }}>
       <Paper 
         elevation={3} 
         sx={{ 
-          p: { xs: 1, sm: 2 },
+          p: 2,
+          '@media (max-width:370px)': { 
+            p: 1 
+          },
           maxWidth: '100%',
           overflow: 'hidden'
         }}

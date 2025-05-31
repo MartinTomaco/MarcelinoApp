@@ -39,8 +39,18 @@ export const WorkDaysConfig: React.FC<WorkDaysConfigProps> = ({
   };
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 2 } }}>
-      <Paper elevation={3} sx={{ p: { xs: 1, sm: 2 } }}>
+    <Box sx={{ 
+      p: 2,
+      '@media (max-width:370px)': { 
+        p: 1 
+      }
+    }}>
+      <Paper elevation={3} sx={{ 
+        p: 2,
+        '@media (max-width:370px)': { 
+          p: 1 
+        }
+      }}>
         <Typography variant="h5" gutterBottom>
           Configuración de Días Laborables
         </Typography>
