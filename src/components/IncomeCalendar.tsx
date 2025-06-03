@@ -35,6 +35,8 @@ interface IncomeCalendarProps {
   onDeleteRecord: (recordId: string) => void;
   onAddNonWorkingDay: (date: Date) => void;
   onRemoveNonWorkingDay: (date: Date) => void;
+  selectedMonth: Date;
+  onMonthChange: (date: Date) => void;
 }
 
 export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
@@ -46,6 +48,8 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
   onDeleteRecord,
   onAddNonWorkingDay,
   onRemoveNonWorkingDay,
+  selectedMonth,
+  onMonthChange,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -267,7 +271,8 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
             slots={{
               day: renderDay
             }}
-            defaultValue={currentMonth}
+            defaultValue={selectedMonth}
+            onMonthChange={onMonthChange}
           />
         </Box>
       </Paper>

@@ -95,4 +95,37 @@ export const getNonWorkingDays = (): NonWorkingDay[] => {
     console.error('Error al obtener días no laborables:', error);
     return [];
   }
+};
+
+// Función para generar un respaldo de todos los datos
+export const generateBackup = (): string => {
+  const backup = {
+    income_records: getIncomeRecords(),
+    work_days_config: getWorkDaysConfig(),
+    non_working_days: getNonWorkingDays(),
+    timestamp: new Date().toISOString()
+  };
+  return JSON.stringify(backup, null, 2);
+};
+
+// Función para restaurar datos desde un respaldo
+export const restoreFromBackup = (backupString: string): boolean => {
+  try {
+    const backup = JSON.parse(backupString);
+    
+    // Validar que el respaldo tenga la estructura correcta
+    if (!backup.income_records || !backup.work_days_config || !backup.non_working_days) {
+      throw new Error('Formato de respaldo inválido');
+    }
+
+    // Restaurar los datos
+    saveIncomeRecords(backup.income_records);
+    saveWorkDaysConfig(backup.work_days_config);
+    saveNonWorkingDays(backup.non_working_days);
+
+    return true;
+  } catch (error) {
+    console.error('Error al restaurar el respaldo:', error);
+    return false;
+  }
 }; 

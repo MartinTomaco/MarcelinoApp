@@ -5,6 +5,7 @@ import { useSwipeable } from 'react-swipeable';
 import { IncomeCalendar } from '../components/IncomeCalendar';
 import { WorkDaysConfig } from '../components/WorkDaysConfig';
 import { IncomeStats } from '../components/IncomeStats';
+import { BackupRestore } from '../components/BackupRestore';
 import { IncomeRecord, WorkDayConfig, MonthlyStats, NonWorkingDay } from '../types';
 import {
   getIncomeRecords,
@@ -193,48 +194,39 @@ export const Dashboard: React.FC = () => {
 
         <Box sx={{ height: 'calc(100% - 48px)', overflow: 'auto' }}>
           {tabValue === 0 && (
-            <Box sx={{ 
-              p: { xs: 0, sm: 3 }, 
-              height: '100%', 
-              overflow: 'auto',
-              touchAction: 'pan-y pinch-zoom'
-            }}>
+            <TabPanel value={tabValue} index={0}>
               <IncomeCalendar
                 records={records}
                 workDaysConfig={workDaysConfig}
-                nonWorkingDays={nonWorkingDays}
                 onAddRecord={handleAddRecord}
                 onEditRecord={handleEditRecord}
                 onDeleteRecord={handleDeleteRecord}
+                nonWorkingDays={nonWorkingDays}
                 onAddNonWorkingDay={handleAddNonWorkingDay}
                 onRemoveNonWorkingDay={handleRemoveNonWorkingDay}
+                selectedMonth={selectedMonth}
+                onMonthChange={handleMonthChange}
               />
-            </Box>
+            </TabPanel>
           )}
 
           {tabValue === 1 && (
-            <Box sx={{ 
-              p: { xs: 0, sm: 3 }, 
-              height: '100%', 
-              overflow: 'auto',
-              touchAction: 'pan-y pinch-zoom'
-            }}>
-              <IncomeStats stats={monthlyStats} onMonthChange={handleMonthChange} />
-            </Box>
+            <TabPanel value={tabValue} index={1}>
+              <IncomeStats
+                stats={monthlyStats}
+                onMonthChange={handleMonthChange}
+              />
+            </TabPanel>
           )}
 
           {tabValue === 2 && (
-            <Box sx={{ 
-              p: { xs: 0, sm: 3 }, 
-              height: '100%', 
-              overflow: 'auto',
-              touchAction: 'pan-y pinch-zoom'
-            }}>
+            <TabPanel value={tabValue} index={2}>
               <WorkDaysConfig
                 config={workDaysConfig}
                 onConfigChange={handleConfigChange}
               />
-            </Box>
+              <BackupRestore />
+            </TabPanel>
           )}
         </Box>
       </Box>
