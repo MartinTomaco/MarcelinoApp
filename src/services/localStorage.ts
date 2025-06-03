@@ -8,13 +8,38 @@ const STORAGE_KEYS = {
 
 // Función helper para guardar datos en localStorage
 const saveToStorage = <T>(key: string, data: T): void => {
-  localStorage.setItem(key, JSON.stringify(data));
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error(`Error al guardar en localStorage (${key}):`, error);
+    // Si el error es por cuota excedida, intentamos limpiar datos antiguos
+    if (error instanceof Error && error.name === 'QuotaExceededError') {
+      try {
+        localStorage.clear();
+        localStorage.setItem(key, JSON.stringify(data));
+      } catch (retryError) {
+        console.error('Error al intentar recuperar espacio en localStorage:', retryError);
+      }
+    }
+  }
 };
 
 // Función helper para obtener datos del localStorage
 const getFromStorage = <T>(key: string, defaultValue: T): T => {
-  const data = localStorage.getItem(key);
-  return data ? JSON.parse(data) : defaultValue;
+  try {
+    const data = localStorage.getItem(key);
+    if (!data) return defaultValue;
+    
+    try {
+      return JSON.parse(data);
+    } catch (parseError) {
+      console.error(`Error al parsear datos de localStorage (${key}):`, parseError);
+      return defaultValue;
+    }
+  } catch (error) {
+    console.error(`Error al leer de localStorage (${key}):`, error);
+    return defaultValue;
+  }
 };
 
 // Configuración por defecto de días laborables (solo domingo no laborable)
@@ -30,11 +55,16 @@ export const saveIncomeRecords = (records: IncomeRecord[]): void => {
 };
 
 export const getIncomeRecords = (): IncomeRecord[] => {
-  const records = getFromStorage<(Omit<IncomeRecord, 'date'> & { date: string })[]>(STORAGE_KEYS.INCOME_RECORDS, []);
-  return records.map(record => ({
-    ...record,
-    date: new Date(record.date)
-  }));
+  try {
+    const records = getFromStorage<(Omit<IncomeRecord, 'date'> & { date: string })[]>(STORAGE_KEYS.INCOME_RECORDS, []);
+    return records.map(record => ({
+      ...record,
+      date: new Date(record.date)
+    }));
+  } catch (error) {
+    console.error('Error al obtener registros de ingresos:', error);
+    return [];
+  }
 };
 
 export const saveWorkDaysConfig = (config: WorkDayConfig[]): void => {
@@ -42,7 +72,12 @@ export const saveWorkDaysConfig = (config: WorkDayConfig[]): void => {
 };
 
 export const getWorkDaysConfig = (): WorkDayConfig[] => {
-  return getFromStorage(STORAGE_KEYS.WORK_DAYS_CONFIG, defaultWorkDaysConfig);
+  try {
+    return getFromStorage<WorkDayConfig[]>(STORAGE_KEYS.WORK_DAYS_CONFIG, defaultWorkDaysConfig);
+  } catch (error) {
+    console.error('Error al obtener configuración de días laborables:', error);
+    return [];
+  }
 };
 
 export const saveNonWorkingDays = (days: NonWorkingDay[]): void => {
@@ -50,5 +85,14 @@ export const saveNonWorkingDays = (days: NonWorkingDay[]): void => {
 };
 
 export const getNonWorkingDays = (): NonWorkingDay[] => {
-  return getFromStorage(STORAGE_KEYS.NON_WORKING_DAYS, []);
+  try {
+    const days = getFromStorage<(Omit<NonWorkingDay, 'date'> & { date: string })[]>(STORAGE_KEYS.NON_WORKING_DAYS, []);
+    return days.map(day => ({
+      ...day,
+      date: new Date(day.date)
+    }));
+  } catch (error) {
+    console.error('Error al obtener días no laborables:', error);
+    return [];
+  }
 }; 
