@@ -33,7 +33,7 @@ interface TabPanelProps {
 
 const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
   <div role="tabpanel" hidden={value !== index}>
-    {value === index && <Box sx={{ p: { xs: 1, sm: 3 } }}>{children}</Box>}
+    <Box sx={{ p: { xs: 1, sm: 3 } }}>{children}</Box>
   </div>
 );
 
@@ -45,6 +45,7 @@ export const Dashboard: React.FC = () => {
   const [drivers, setDrivers] = useState<Driver[]>(getDrivers());
   const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>(getExpenseCategories());
   const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Migración de datos antiguos (compatibilidad hacia atrás)
   useEffect(() => {
@@ -132,18 +133,18 @@ export const Dashboard: React.FC = () => {
 
   const handlers = useSwipeable({
     onSwipedLeft: (event) => {
-      // Solo cambiar de pestaña si el gesto no viene del calendario
+      // Solo cambiar de pestaña si el gesto no viene del calendario y no hay modal abierto
       const target = event.event.target as HTMLElement;
-      if (target && !target.closest('.MuiDateCalendar-root')) {
+      if (target && !target.closest('.MuiDateCalendar-root') && !isModalOpen) {
         if (tabValue < 3) {
           setTabValue(tabValue + 1);
         }
       }
     },
     onSwipedRight: (event) => {
-      // Solo cambiar de pestaña si el gesto no viene del calendario
+      // Solo cambiar de pestaña si el gesto no viene del calendario y no hay modal abierto
       const target = event.event.target as HTMLElement;
-      if (target && !target.closest('.MuiDateCalendar-root')) {
+      if (target && !target.closest('.MuiDateCalendar-root') && !isModalOpen) {
         if (tabValue > 0) {
           setTabValue(tabValue - 1);
         }
@@ -262,57 +263,50 @@ export const Dashboard: React.FC = () => {
         </Tabs>
 
         <Box sx={{ height: 'calc(100% - 48px)', overflow: 'auto' }}>
-          {tabValue === 0 && (
-            <TabPanel value={tabValue} index={0}>
-              <IncomeCalendar
-                records={records}
-                workDaysConfig={workDaysConfig}
-                onAddRecord={handleAddRecord}
-                onEditRecord={handleEditRecord}
-                onDeleteRecord={handleDeleteRecord}
-                nonWorkingDays={nonWorkingDays}
-                onAddNonWorkingDay={handleAddNonWorkingDay}
-                onRemoveNonWorkingDay={handleRemoveNonWorkingDay}
-                selectedMonth={selectedMonth}
-                onMonthChange={handleMonthChange}
-                drivers={drivers}
-                expenseCategories={expenseCategories}
-              />
-            </TabPanel>
-          )}
+          <TabPanel value={tabValue} index={0}>
+            <IncomeCalendar
+              records={records}
+              workDaysConfig={workDaysConfig}
+              onAddRecord={handleAddRecord}
+              onEditRecord={handleEditRecord}
+              onDeleteRecord={handleDeleteRecord}
+              nonWorkingDays={nonWorkingDays}
+              onAddNonWorkingDay={handleAddNonWorkingDay}
+              onRemoveNonWorkingDay={handleRemoveNonWorkingDay}
+              selectedMonth={selectedMonth}
+              onMonthChange={handleMonthChange}
+              drivers={drivers}
+              expenseCategories={expenseCategories}
+              onModalOpenChange={setIsModalOpen}
+            />
+          </TabPanel>
 
-          {tabValue === 1 && (
-            <TabPanel value={tabValue} index={1}>
-              <IncomeStats
-                stats={monthlyStats}
-                drivers={drivers}
-                onMonthChange={handleMonthChange}
-              />
-            </TabPanel>
-          )}
+          <TabPanel value={tabValue} index={1}>
+            <IncomeStats
+              stats={monthlyStats}
+              drivers={drivers}
+              onMonthChange={handleMonthChange}
+            />
+          </TabPanel>
 
-          {tabValue === 2 && (
-            <TabPanel value={tabValue} index={2}>
-              <DriversConfig
-                drivers={drivers}
-                onDriversChange={handleDriversChange}
-              />
-            </TabPanel>
-          )}
+          <TabPanel value={tabValue} index={2}>
+            <DriversConfig
+              drivers={drivers}
+              onDriversChange={handleDriversChange}
+            />
+          </TabPanel>
 
-          {tabValue === 3 && (
-            <TabPanel value={tabValue} index={3}>
-              <WorkDaysConfig
-                config={workDaysConfig}
-                onConfigChange={handleConfigChange}
-              />
-              <ExpenseCategoriesConfig
-                categories={expenseCategories}
-                onCategoriesChange={handleExpenseCategoriesChange}
-              />
-              <BackupRestore />
-            </TabPanel>
-          )}
+          <TabPanel value={tabValue} index={3}>
+            <WorkDaysConfig
+              config={workDaysConfig}
+              onConfigChange={handleConfigChange}
+            />
+            <ExpenseCategoriesConfig
+              categories={expenseCategories}
+              onCategoriesChange={handleExpenseCategoriesChange}
+            />
+            <BackupRestore />
+          </TabPanel>
         </Box>
       </Box>
     </Container>

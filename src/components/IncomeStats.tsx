@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -66,17 +66,24 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>)
 };
 
 export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, drivers, onMonthChange }) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  // Usar el mes actual de las estadísticas en lugar de un estado interno
+  const currentDate = useMemo(() => {
+    // Extraer el mes de las estadísticas si hay datos, sino usar el mes actual
+    const dates = Object.keys({ ...stats.incomeByDay, ...stats.expensesByDay });
+    if (dates.length > 0) {
+      const firstDate = dates[0];
+      return new Date(firstDate);
+    }
+    return new Date();
+  }, [stats.incomeByDay, stats.expensesByDay]);
 
   const handlePreviousMonth = () => {
     const newDate = subMonths(currentDate, 1);
-    setCurrentDate(newDate);
     onMonthChange?.(newDate);
   };
 
   const handleNextMonth = () => {
     const newDate = addMonths(currentDate, 1);
-    setCurrentDate(newDate);
     onMonthChange?.(newDate);
   };
 

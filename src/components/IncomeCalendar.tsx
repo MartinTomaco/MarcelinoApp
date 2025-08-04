@@ -46,6 +46,7 @@ interface IncomeCalendarProps {
   onRemoveNonWorkingDay: (date: Date) => void;
   selectedMonth: Date;
   onMonthChange: (date: Date) => void;
+  onModalOpenChange?: (isOpen: boolean) => void;
 }
 
 export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
@@ -61,6 +62,7 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
   onRemoveNonWorkingDay,
   selectedMonth,
   onMonthChange,
+  onModalOpenChange,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -121,10 +123,10 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
               borderRadius: '50%',
               backgroundColor: 'warning.main',
               position: 'absolute',
-              top: 2,
-              left: '50%',
-              transform: 'translateX(-50%)',
+              top: 1,
+              left: 1,
               zIndex: 1,
+              boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
             }}
             aria-hidden="true"
           />
@@ -180,28 +182,55 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
           <Box
             sx={{
               position: 'absolute',
-              top: 2,
-              right: 2,
+              top: 1,
+              right: 1,
               display: 'flex',
-              gap: 0.5,
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              gap: 0.25,
+              maxWidth: 'calc(100% - 8px)',
+              justifyContent: 'flex-end',
             }}
           >
-            {dayTransactions.slice(0, 3).map((transaction, index) => {
+            {dayTransactions.slice(0, 4).map((transaction, index) => {
               const driver = drivers.find(d => d.id === transaction.driverId);
               return (
                 <Box
-                  key={index}
+                  key={`${transaction.id}-${index}`}
                   sx={{
-                    width: 6,
-                    height: 6,
+                    width: 5,
+                    height: 5,
                     borderRadius: '50%',
                     backgroundColor: driver?.vehicleColor || 'grey.500',
                     border: 1,
                     borderColor: 'white',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                    flexShrink: 0,
                   }}
                 />
               );
             })}
+            {dayTransactions.length > 4 && (
+              <Box
+                sx={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: '50%',
+                  backgroundColor: 'grey.400',
+                  border: 1,
+                  borderColor: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.5rem',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                }}
+              >
+                +
+              </Box>
+            )}
           </Box>
         )}
       </Box>
@@ -232,7 +261,8 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
       setSelectedTransactionId('');
     }
     setIsDialogOpen(true);
-  }, [records, drivers]);
+    onModalOpenChange?.(true);
+  }, [records, drivers, onModalOpenChange]);
 
   const handleSave = useCallback(() => {
     if (!selectedDate || !amount || !selectedDriver) return;
@@ -263,7 +293,8 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
 
     setIsDialogOpen(false);
     setSelectedDate(null);
-  }, [selectedDate, amount, notes, transactionType, selectedDriver, selectedCategory, records, onEditRecord, onAddRecord]);
+    onModalOpenChange?.(false);
+  }, [selectedDate, amount, notes, transactionType, selectedDriver, selectedCategory, records, onEditRecord, onAddRecord, onModalOpenChange]);
 
   const handleToggleNonWorkingDay = useCallback(() => {
     if (selectedDate) {
@@ -280,8 +311,9 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
       }
       setIsDialogOpen(false);
       setSelectedDate(null);
+      onModalOpenChange?.(false);
     }
-  }, [selectedDate, nonWorkingDays, onAddNonWorkingDay, onRemoveNonWorkingDay]);
+  }, [selectedDate, nonWorkingDays, onAddNonWorkingDay, onRemoveNonWorkingDay, onModalOpenChange]);
 
   const handleDelete = useCallback(() => {
     if (!selectedDate || !selectedDriver) return;
@@ -297,8 +329,9 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
       onDeleteRecord(existingTransaction.id);
       setIsDialogOpen(false);
       setSelectedDate(null);
+      onModalOpenChange?.(false);
     }
-  }, [selectedDate, selectedDriver, transactionType, records, onDeleteRecord]);
+  }, [selectedDate, selectedDriver, transactionType, records, onDeleteRecord, onModalOpenChange]);
 
   const activeDrivers = drivers.filter(d => d.active);
 
@@ -353,7 +386,10 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
 
       <Dialog 
         open={isDialogOpen} 
-        onClose={() => setIsDialogOpen(false)}
+        onClose={() => {
+          setIsDialogOpen(false);
+          onModalOpenChange?.(false);
+        }}
         sx={{
           '& .MuiDialog-container': {
             alignItems: 'flex-start',
@@ -536,7 +572,10 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
               Eliminar
             </Button>
           )}
-          <Button onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={() => {
+            setIsDialogOpen(false);
+            onModalOpenChange?.(false);
+          }}>Cancelar</Button>
           <Button onClick={handleSave} variant="contained">
             Guardar
           </Button>
