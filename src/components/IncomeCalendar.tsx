@@ -12,12 +12,19 @@ import {
   TextField,
   useMediaQuery,
   useTheme,
-  Stack
+  Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  ToggleButton,
+  ToggleButtonGroup,
+  Chip
 } from '@mui/material';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { format, isSameDay, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { IncomeRecord, WorkDayConfig, NonWorkingDay } from '../types';
+import { TransactionRecord, WorkDayConfig, NonWorkingDay, Driver, ExpenseCategory } from '../types';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
@@ -27,11 +34,13 @@ import type { Swiper as SwiperType } from 'swiper';
 import 'swiper/css';
 
 interface IncomeCalendarProps {
-  records: IncomeRecord[];
+  records: TransactionRecord[];
   workDaysConfig: WorkDayConfig[];
   nonWorkingDays: NonWorkingDay[];
-  onAddRecord: (record: Omit<IncomeRecord, 'id'>) => void;
-  onEditRecord: (record: IncomeRecord) => void;
+  drivers: Driver[];
+  expenseCategories: ExpenseCategory[];
+  onAddRecord: (record: Omit<TransactionRecord, 'id'>) => void;
+  onEditRecord: (record: TransactionRecord) => void;
   onDeleteRecord: (recordId: string) => void;
   onAddNonWorkingDay: (date: Date) => void;
   onRemoveNonWorkingDay: (date: Date) => void;
@@ -43,6 +52,8 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
   records,
   workDaysConfig,
   nonWorkingDays,
+  drivers,
+  expenseCategories,
   onAddRecord,
   onEditRecord,
   onDeleteRecord,
@@ -57,11 +68,14 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
+  const [transactionType, setTransactionType] = useState<'income' | 'expense'>('income');
+  const [selectedDriver, setSelectedDriver] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string>('');
 
-  const getDayIncome = useCallback((date: Date) => {
-    const record = records.find(r => isSameDay(r.date, date));
-    return record ? record.amount : 0;
+  const getDayTransactions = useCallback((date: Date) => {
+    return records.filter(r => isSameDay(r.date, date));
   }, [records]);
 
   const isNonWorkingDay = useCallback((date: Date) => {
@@ -76,10 +90,19 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
 
   const renderDay = useCallback((props: PickersDayProps<Date>) => {
     const { day, selected, ...other } = props;
-    const hasIncome = getDayIncome(day);
+    const dayTransactions = getDayTransactions(day);
     const nonWorking = isNonWorkingDay(day);
-    const record = records.find(r => isSameDay(r.date, day));
-    const hasNotes = record?.notes && record.notes.trim().length > 0;
+    const hasNotes = dayTransactions.some(t => t.notes && t.notes.trim().length > 0);
+    
+    const totalIncome = dayTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    const totalExpenses = dayTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const netAmount = totalIncome - totalExpenses;
     
     return (
       <Box
@@ -119,7 +142,7 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
             zIndex: 2,
           }}
         />
-        {hasIncome > 0 && (
+        {dayTransactions.length > 0 && (
           <Typography
             variant="caption"
             sx={{
@@ -127,22 +150,22 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
               bottom: 0,
               left: '50%',
               transform: 'translateX(-50%)',
-              color: 'success.main',
+              color: netAmount >= 0 ? 'success.main' : 'error.main',
               fontWeight: 'bold',
               fontSize: '0.7rem',
               zIndex: 1,
             }}
           >
-            ${hasIncome}
+            ${Math.abs(netAmount)}
           </Typography>
         )}
-        {hasIncome > 0 && (
+        {dayTransactions.length > 0 && (
           <Box
             sx={{
               width: 4,
               height: 4,
               borderRadius: '50%',
-              backgroundColor: 'success.main',
+              backgroundColor: netAmount >= 0 ? 'success.main' : 'error.main',
               position: 'absolute',
               bottom: 2,
               left: '50%',
@@ -152,49 +175,95 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
             aria-hidden="true"
           />
         )}
+        {/* Indicadores de múltiples conductores */}
+        {dayTransactions.length > 1 && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 2,
+              right: 2,
+              display: 'flex',
+              gap: 0.5,
+            }}
+          >
+            {dayTransactions.slice(0, 3).map((transaction, index) => {
+              const driver = drivers.find(d => d.id === transaction.driverId);
+              return (
+                <Box
+                  key={index}
+                  sx={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    backgroundColor: driver?.vehicleColor || 'grey.500',
+                    border: 1,
+                    borderColor: 'white',
+                  }}
+                />
+              );
+            })}
+          </Box>
+        )}
       </Box>
     );
-  }, [getDayIncome, isNonWorkingDay, records]);
+  }, [getDayTransactions, isNonWorkingDay, records, drivers]);
 
   const handleDateSelect = useCallback((date: Date | null) => {
     setSelectedDate(date);
-    const existingRecord = records.find(
+    const existingTransactions = records.filter(
       record => isSameDay(record.date, date!)
     );
     
-    if (existingRecord) {
-      setAmount(existingRecord.amount.toString());
-      setNotes(existingRecord.notes || '');
+    if (existingTransactions.length > 0) {
+      // Si hay múltiples transacciones, mostrar la primera
+      const firstTransaction = existingTransactions[0];
+      setAmount(firstTransaction.amount.toString());
+      setNotes(firstTransaction.notes || '');
+      setTransactionType(firstTransaction.type);
+      setSelectedDriver(firstTransaction.driverId);
+      setSelectedCategory(firstTransaction.category || '');
+      setSelectedTransactionId(firstTransaction.id);
     } else {
       setAmount('');
       setNotes('');
+      setTransactionType('income');
+      setSelectedDriver(drivers.length > 0 ? drivers[0].id : '');
+      setSelectedCategory('');
+      setSelectedTransactionId('');
     }
     setIsDialogOpen(true);
-  }, [records]);
+  }, [records, drivers]);
 
   const handleSave = useCallback(() => {
-    if (!selectedDate || !amount) return;
+    if (!selectedDate || !amount || !selectedDriver) return;
 
-    const record: Omit<IncomeRecord, 'id'> = {
+    const record: Omit<TransactionRecord, 'id'> = {
       date: selectedDate,
       amount: parseFloat(amount),
+      type: transactionType,
+      driverId: selectedDriver,
+      category: transactionType === 'expense' ? selectedCategory : undefined,
       notes,
-      driverId: '1',
     };
 
-    const existingRecord = records.find(
-      r => isSameDay(r.date, selectedDate)
+    // Buscar transacción existente del mismo tipo, conductor y fecha
+    const existingTransaction = records.find(
+      r => isSameDay(r.date, selectedDate) && 
+           r.driverId === selectedDriver && 
+           r.type === transactionType
     );
 
-    if (existingRecord) {
-      onEditRecord({ ...record, id: existingRecord.id });
+    if (existingTransaction) {
+      // Editar transacción existente
+      onEditRecord({ ...record, id: existingTransaction.id });
     } else {
+      // Agregar nueva transacción
       onAddRecord(record);
     }
 
     setIsDialogOpen(false);
     setSelectedDate(null);
-  }, [selectedDate, amount, notes, records, onEditRecord, onAddRecord]);
+  }, [selectedDate, amount, notes, transactionType, selectedDriver, selectedCategory, records, onEditRecord, onAddRecord]);
 
   const handleToggleNonWorkingDay = useCallback(() => {
     if (selectedDate) {
@@ -215,18 +284,23 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
   }, [selectedDate, nonWorkingDays, onAddNonWorkingDay, onRemoveNonWorkingDay]);
 
   const handleDelete = useCallback(() => {
-    if (!selectedDate) return;
+    if (!selectedDate || !selectedDriver) return;
     
-    const existingRecord = records.find(
-      r => isSameDay(r.date, selectedDate)
+    // Buscar transacción existente del mismo tipo, conductor y fecha
+    const existingTransaction = records.find(
+      r => isSameDay(r.date, selectedDate) && 
+           r.driverId === selectedDriver && 
+           r.type === transactionType
     );
 
-    if (existingRecord) {
-      onDeleteRecord(existingRecord.id);
+    if (existingTransaction) {
+      onDeleteRecord(existingTransaction.id);
       setIsDialogOpen(false);
       setSelectedDate(null);
     }
-  }, [selectedDate, records, onDeleteRecord]);
+  }, [selectedDate, selectedDriver, transactionType, records, onDeleteRecord]);
+
+  const activeDrivers = drivers.filter(d => d.active);
 
   return (
     <Box sx={{ 
@@ -248,7 +322,7 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
       >
         <Stack direction="row" justifyContent={{ xs: 'center', sm: 'space-between' }} alignItems="center" mb={2} mt={2} ml={{ sm: 2 }}>
           <Typography variant="h5">
-            Calendario de Ingresos
+            Calendario de Transacciones
           </Typography>
         </Stack>
 
@@ -296,10 +370,134 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
         }}
       >
         <DialogTitle>
-          {selectedDate ? format(selectedDate, 'dd/MM/yyyy', { locale: es }) : ''}
+          <Stack spacing={1}>
+            <Typography variant="h6">
+              {selectedDate ? format(selectedDate, 'dd/MM/yyyy', { locale: es }) : ''}
+            </Typography>
+            {selectedDate && getDayTransactions(selectedDate).length > 1 && (
+              <FormControl fullWidth size="small">
+                <InputLabel>Seleccionar Transacción</InputLabel>
+                <Select
+                  value={selectedTransactionId}
+                  label="Seleccionar Transacción"
+                  onChange={(e) => {
+                    const transactionId = e.target.value;
+                    setSelectedTransactionId(transactionId);
+                    const transaction = records.find(t => t.id === transactionId);
+                    if (transaction) {
+                      setAmount(transaction.amount.toString());
+                      setNotes(transaction.notes || '');
+                      setTransactionType(transaction.type);
+                      setSelectedDriver(transaction.driverId);
+                      setSelectedCategory(transaction.category || '');
+                    }
+                  }}
+                >
+                  {getDayTransactions(selectedDate).map((transaction) => {
+                    const driver = drivers.find(d => d.id === transaction.driverId);
+                    const category = transaction.type === 'expense' ? 
+                      expenseCategories.find(c => c.id === transaction.category) : null;
+                    return (
+                      <MenuItem key={transaction.id} value={transaction.id}>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Box
+                            sx={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: '50%',
+                              backgroundColor: driver?.vehicleColor || 'grey.500',
+                              border: 1,
+                              borderColor: 'divider',
+                            }}
+                          />
+                          <Typography variant="body2">
+                            {driver?.name} - {transaction.type === 'income' ? 'Ingreso' : 'Gasto'}
+                            {category && ` (${category.name})`}
+                          </Typography>
+                          <Typography variant="body2" fontWeight="bold">
+                            ${transaction.amount}
+                          </Typography>
+                        </Stack>
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+              </FormControl>
+            )}
+          </Stack>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 2 }}>
+            <ToggleButtonGroup
+              value={transactionType}
+              exclusive
+              onChange={(e, value) => value && setTransactionType(value)}
+              fullWidth
+            >
+              <ToggleButton value="income" color="success">
+                Ingreso
+              </ToggleButton>
+              <ToggleButton value="expense" color="error">
+                Gasto
+              </ToggleButton>
+            </ToggleButtonGroup>
+
+            <FormControl fullWidth>
+              <InputLabel>Conductor</InputLabel>
+              <Select
+                value={selectedDriver}
+                label="Conductor"
+                onChange={(e) => setSelectedDriver(e.target.value)}
+              >
+                {activeDrivers.map((driver) => (
+                  <MenuItem key={driver.id} value={driver.id}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Box
+                        sx={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: '50%',
+                          backgroundColor: driver.vehicleColor,
+                          border: 1,
+                          borderColor: 'divider',
+                        }}
+                      />
+                      <Typography>{driver.name}</Typography>
+                    </Stack>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {transactionType === 'expense' && (
+              <FormControl fullWidth>
+                <InputLabel>Categoría</InputLabel>
+                <Select
+                  value={selectedCategory}
+                  label="Categoría"
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                >
+                  {expenseCategories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <Box
+                          sx={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: '50%',
+                            backgroundColor: category.color,
+                            border: 1,
+                            borderColor: 'divider',
+                          }}
+                        />
+                        <Typography>{category.name}</Typography>
+                      </Stack>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+
             <TextField
               autoFocus
               label="Monto"
@@ -329,7 +527,7 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
           </Stack>
         </DialogContent>
         <DialogActions>
-          {selectedDate && records.find(r => isSameDay(r.date, selectedDate)) && (
+          {selectedDate && selectedDriver && records.find(r => isSameDay(r.date, selectedDate) && r.driverId === selectedDriver && r.type === transactionType) && (
             <Button 
               onClick={handleDelete} 
               color="error" 

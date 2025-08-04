@@ -6,14 +6,22 @@ import { IncomeCalendar } from '../components/IncomeCalendar';
 import { WorkDaysConfig } from '../components/WorkDaysConfig';
 import { IncomeStats } from '../components/IncomeStats';
 import { BackupRestore } from '../components/BackupRestore';
-import { IncomeRecord, WorkDayConfig, MonthlyStats, NonWorkingDay } from '../types';
+import { DriversConfig } from '../components/DriversConfig';
+import { ExpenseCategoriesConfig } from '../components/ExpenseCategoriesConfig';
+import { TransactionRecord, WorkDayConfig, MonthlyStats, NonWorkingDay, Driver, ExpenseCategory } from '../types';
 import {
   getIncomeRecords,
   saveIncomeRecords,
+  getTransactionRecords,
+  saveTransactionRecords,
   getWorkDaysConfig,
   saveWorkDaysConfig,
   getNonWorkingDays,
-  saveNonWorkingDays
+  saveNonWorkingDays,
+  getDrivers,
+  saveDrivers,
+  getExpenseCategories,
+  saveExpenseCategories
 } from '../services/localStorage';
 import { format } from 'date-fns';
 
@@ -31,10 +39,30 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
 
 export const Dashboard: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
-  const [records, setRecords] = useState<IncomeRecord[]>(getIncomeRecords());
+  const [records, setRecords] = useState<TransactionRecord[]>(getTransactionRecords());
   const [nonWorkingDays, setNonWorkingDays] = useState<NonWorkingDay[]>(getNonWorkingDays());
   const [workDaysConfig, setWorkDaysConfig] = useState<WorkDayConfig[]>(getWorkDaysConfig());
+  const [drivers, setDrivers] = useState<Driver[]>(getDrivers());
+  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>(getExpenseCategories());
   const [selectedMonth, setSelectedMonth] = useState(new Date());
+
+  // Migración de datos antiguos (compatibilidad hacia atrás)
+  useEffect(() => {
+    const oldIncomeRecords = getIncomeRecords();
+    if (oldIncomeRecords.length > 0 && records.length === 0) {
+      // Convertir registros antiguos a nuevo formato
+      const convertedRecords: TransactionRecord[] = oldIncomeRecords.map(record => ({
+        id: record.id,
+        driverId: record.driverId,
+        date: record.date,
+        amount: record.amount,
+        type: 'income' as const,
+        notes: record.notes,
+      }));
+      setRecords(convertedRecords);
+      saveTransactionRecords(convertedRecords);
+    }
+  }, [records.length]);
 
   // Memoizar los cálculos de estadísticas
   const monthlyStats = useMemo(() => {
@@ -48,13 +76,26 @@ export const Dashboard: React.FC = () => {
     });
 
     const incomeByDay: { [key: string]: number } = {};
+    const expensesByDay: { [key: string]: number } = {};
+    const incomeByDriver: { [key: string]: number } = {};
+    const expensesByDriver: { [key: string]: number } = {};
+    
     let totalIncome = 0;
+    let totalExpenses = 0;
     let totalWorkDays = 0;
 
     monthlyRecords.forEach(record => {
       const dateStr = format(record.date, 'yyyy-MM-dd');
-      incomeByDay[dateStr] = (incomeByDay[dateStr] || 0) + record.amount;
-      totalIncome += record.amount;
+      
+      if (record.type === 'income') {
+        incomeByDay[dateStr] = (incomeByDay[dateStr] || 0) + record.amount;
+        incomeByDriver[record.driverId] = (incomeByDriver[record.driverId] || 0) + record.amount;
+        totalIncome += record.amount;
+      } else {
+        expensesByDay[dateStr] = (expensesByDay[dateStr] || 0) + record.amount;
+        expensesByDriver[record.driverId] = (expensesByDriver[record.driverId] || 0) + record.amount;
+        totalExpenses += record.amount;
+      }
     });
 
     // Contar días laborables en el mes
@@ -73,9 +114,15 @@ export const Dashboard: React.FC = () => {
 
     return {
       totalIncome,
+      totalExpenses,
+      netIncome: totalIncome - totalExpenses,
       averageDailyIncome: totalWorkDays > 0 ? totalIncome / totalWorkDays : 0,
+      averageDailyExpenses: totalWorkDays > 0 ? totalExpenses / totalWorkDays : 0,
       totalWorkDays,
       incomeByDay,
+      expensesByDay,
+      incomeByDriver,
+      expensesByDriver,
     };
   }, [records, workDaysConfig, nonWorkingDays, selectedMonth]);
 
@@ -88,7 +135,7 @@ export const Dashboard: React.FC = () => {
       // Solo cambiar de pestaña si el gesto no viene del calendario
       const target = event.event.target as HTMLElement;
       if (target && !target.closest('.MuiDateCalendar-root')) {
-        if (tabValue < 2) {
+        if (tabValue < 3) {
           setTabValue(tabValue + 1);
         }
       }
@@ -113,27 +160,43 @@ export const Dashboard: React.FC = () => {
     setSelectedMonth(date);
   }, []);
 
-  const handleAddRecord = useCallback((record: Omit<IncomeRecord, 'id'>) => {
-    const newRecord: IncomeRecord = {
+  const handleAddRecord = useCallback((record: Omit<TransactionRecord, 'id'>) => {
+    const newRecord: TransactionRecord = {
       ...record,
       id: Date.now().toString(),
     };
     const updatedRecords = [...records, newRecord];
     setRecords(updatedRecords);
-    saveIncomeRecords(updatedRecords);
+    saveTransactionRecords(updatedRecords);
   }, [records]);
 
-  const handleEditRecord = useCallback((record: IncomeRecord) => {
+  const handleEditRecord = useCallback((record: TransactionRecord) => {
     const updatedRecords = records.map(r =>
       r.id === record.id ? record : r
     );
     setRecords(updatedRecords);
-    saveIncomeRecords(updatedRecords);
+    saveTransactionRecords(updatedRecords);
+  }, [records]);
+
+  const handleDeleteRecord = useCallback((recordId: string) => {
+    const updatedRecords = records.filter(r => r.id !== recordId);
+    setRecords(updatedRecords);
+    saveTransactionRecords(updatedRecords);
   }, [records]);
 
   const handleConfigChange = useCallback((newConfig: WorkDayConfig[]) => {
     setWorkDaysConfig(newConfig);
     saveWorkDaysConfig(newConfig);
+  }, []);
+
+  const handleDriversChange = useCallback((newDrivers: Driver[]) => {
+    setDrivers(newDrivers);
+    saveDrivers(newDrivers);
+  }, []);
+
+  const handleExpenseCategoriesChange = useCallback((newCategories: ExpenseCategory[]) => {
+    setExpenseCategories(newCategories);
+    saveExpenseCategories(newCategories);
   }, []);
 
   const handleAddNonWorkingDay = (date: Date) => {
@@ -155,12 +218,6 @@ export const Dashboard: React.FC = () => {
     setNonWorkingDays(updatedNonWorkingDays);
     saveNonWorkingDays(updatedNonWorkingDays);
   };
-
-  const handleDeleteRecord = useCallback((recordId: string) => {
-    const updatedRecords = records.filter(r => r.id !== recordId);
-    setRecords(updatedRecords);
-    saveIncomeRecords(updatedRecords);
-  }, [records]);
 
   return (
     <Container maxWidth="lg" sx={{ 
@@ -189,6 +246,7 @@ export const Dashboard: React.FC = () => {
         >
           <Tab label="Calendario" />
           <Tab label="Estadísticas" />
+          <Tab label="Conductores" />
           <Tab icon={<SettingsIcon />} />
         </Tabs>
 
@@ -206,6 +264,8 @@ export const Dashboard: React.FC = () => {
                 onRemoveNonWorkingDay={handleRemoveNonWorkingDay}
                 selectedMonth={selectedMonth}
                 onMonthChange={handleMonthChange}
+                drivers={drivers}
+                expenseCategories={expenseCategories}
               />
             </TabPanel>
           )}
@@ -214,6 +274,7 @@ export const Dashboard: React.FC = () => {
             <TabPanel value={tabValue} index={1}>
               <IncomeStats
                 stats={monthlyStats}
+                drivers={drivers}
                 onMonthChange={handleMonthChange}
               />
             </TabPanel>
@@ -221,9 +282,22 @@ export const Dashboard: React.FC = () => {
 
           {tabValue === 2 && (
             <TabPanel value={tabValue} index={2}>
+              <DriversConfig
+                drivers={drivers}
+                onDriversChange={handleDriversChange}
+              />
+            </TabPanel>
+          )}
+
+          {tabValue === 3 && (
+            <TabPanel value={tabValue} index={3}>
               <WorkDaysConfig
                 config={workDaysConfig}
                 onConfigChange={handleConfigChange}
+              />
+              <ExpenseCategoriesConfig
+                categories={expenseCategories}
+                onCategoriesChange={handleExpenseCategoriesChange}
               />
               <BackupRestore />
             </TabPanel>
