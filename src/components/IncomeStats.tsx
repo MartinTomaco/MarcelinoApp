@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -8,7 +8,6 @@ import {
   Stack,
   Card,
   CardContent,
-  Chip,
   Divider,
 } from '@mui/material';
 import {
@@ -36,6 +35,7 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 interface IncomeStatsProps {
   stats: MonthlyStats;
   drivers: Driver[];
+  selectedMonth: Date;
   onMonthChange?: (date: Date) => void;
 }
 
@@ -65,17 +65,12 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>)
   return null;
 };
 
-export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, drivers, onMonthChange }) => {
-  // Usar el mes actual de las estadísticas en lugar de un estado interno
-  const currentDate = useMemo(() => {
-    // Extraer el mes de las estadísticas si hay datos, sino usar el mes actual
-    const dates = Object.keys({ ...stats.incomeByDay, ...stats.expensesByDay });
-    if (dates.length > 0) {
-      const firstDate = dates[0];
-      return new Date(firstDate);
-    }
-    return new Date();
-  }, [stats.incomeByDay, stats.expensesByDay]);
+export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, drivers, selectedMonth, onMonthChange }) => {
+  // Usar la fecha seleccionada directamente
+  const currentDate = selectedMonth;
+
+  // Verificar si hay datos en el mes seleccionado
+  const hasData = stats.totalIncome > 0 || stats.totalExpenses > 0;
 
   const handlePreviousMonth = () => {
     const newDate = subMonths(currentDate, 1);
@@ -100,7 +95,8 @@ export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, drivers, onMont
         expenses,
         net: income - expenses,
       };
-    });
+    })
+    .filter(data => data.income > 0 || data.expenses > 0); // Filtrar datos vacíos
 
   // Combinar conductores que tienen ingresos y gastos
   const allDriverIds = new Set([
@@ -120,8 +116,6 @@ export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, drivers, onMont
       net: income - expenses,
     };
   });
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
   return (
     <Box sx={{ 
@@ -151,6 +145,20 @@ export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, drivers, onMont
               <ArrowForwardIosIcon />
             </IconButton>
           </Stack>
+          {!hasData && (
+            <Box 
+              sx={{ 
+                p: 2, 
+                bgcolor: 'info.light', 
+                borderRadius: 1,
+                textAlign: 'center'
+              }}
+            >
+              <Typography variant="body2" color="info.contrastText">
+                No hay transacciones registradas en {format(currentDate, 'MMMM yyyy', { locale: es }).replace(/^\w/, c => c.toUpperCase())}
+              </Typography>
+            </Box>
+          )}
         </Stack>
 
         {/* Resumen de estadísticas */}
@@ -209,7 +217,7 @@ export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, drivers, onMont
         </Grid>
 
         {/* Estadísticas por conductor */}
-        {driverStats.length > 0 && (
+        {driverStats.length > 0 ? (
           <Box mb={3}>
             <Typography variant="h6" mb={2}>
               Estadísticas por Conductor
@@ -253,6 +261,26 @@ export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, drivers, onMont
               ))}
             </Grid>
           </Box>
+        ) : (
+          <Box mb={3}>
+            <Typography variant="h6" mb={2}>
+              Estadísticas por Conductor
+            </Typography>
+            <Box 
+              sx={{ 
+                p: 3, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                border: '1px dashed #ccc',
+                borderRadius: 1
+              }}
+            >
+              <Typography variant="body1" color="text.secondary">
+                No hay transacciones registradas por conductores en este mes
+              </Typography>
+            </Box>
+          </Box>
         )}
 
         {/* Gráfico de barras */}
@@ -260,20 +288,37 @@ export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, drivers, onMont
           <Typography variant="h6" mb={2}>
             Transacciones Diarias
           </Typography>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="income" fill="#4caf50" name="Ingresos" />
-              <Bar dataKey="expenses" fill="#f44336" name="Gastos" />
-            </BarChart>
-          </ResponsiveContainer>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="income" fill="#4caf50" name="Ingresos" />
+                <Bar dataKey="expenses" fill="#f44336" name="Gastos" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <Box 
+              sx={{ 
+                height: 300, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                border: '1px dashed #ccc',
+                borderRadius: 1
+              }}
+            >
+              <Typography variant="body1" color="text.secondary">
+                No hay transacciones registradas en este mes
+              </Typography>
+            </Box>
+          )}
         </Box>
 
         {/* Gráficos circulares de distribución por conductor */}
-        {driverStats.length > 1 && (
+        {driverStats.length > 1 && (stats.totalIncome > 0 || stats.totalExpenses > 0) && (
           <Box>
             <Grid container spacing={3}>
               {/* Gráfico de distribución de ingresos */}

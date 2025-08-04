@@ -285,6 +285,7 @@ export const Dashboard: React.FC = () => {
             <IncomeStats
               stats={monthlyStats}
               drivers={drivers}
+              selectedMonth={selectedMonth}
               onMonthChange={handleMonthChange}
             />
           </TabPanel>
