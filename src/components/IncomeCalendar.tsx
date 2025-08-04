@@ -118,8 +118,8 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
         {hasNotes && (
           <Box
             sx={{
-              width: 4,
-              height: 4,
+              width: 5,
+              height: 5,
               borderRadius: '50%',
               backgroundColor: 'warning.main',
               position: 'absolute',
@@ -202,8 +202,6 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
                     height: 5,
                     borderRadius: '50%',
                     backgroundColor: driver?.vehicleColor || 'grey.500',
-                    border: 1,
-                    borderColor: 'white',
                     boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
                     flexShrink: 0,
                   }}
@@ -217,15 +215,17 @@ export const IncomeCalendar: React.FC<IncomeCalendarProps> = ({
                   height: 5,
                   borderRadius: '50%',
                   backgroundColor: 'grey.400',
-                  border: 1,
-                  borderColor: 'white',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '0.5rem',
+                  fontSize: '0.6rem',
+                  lineHeight: 1,
                   color: 'white',
                   fontWeight: 'bold',
                   boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                  textAlign: 'center',
+                  padding: 0,
+                  margin: 0,
                 }}
               >
                 +
