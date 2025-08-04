@@ -83,8 +83,8 @@ export const ExpenseCategoriesConfig: React.FC<ExpenseCategoriesConfigProps> = (
   };
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Paper elevation={3} sx={{ p: 2 }}>
+    <Box sx={{ p: { xs: 1, sm: 2 } }}>
+      <Paper elevation={3} sx={{ p: { xs: 1, sm: 2 } }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h6">
             Categorías de Gastos

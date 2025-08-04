@@ -118,15 +118,15 @@ export const IncomeStats: React.FC<IncomeStatsProps> = ({ stats, drivers, onMont
 
   return (
     <Box sx={{ 
-      p: 2,
+      p: { xs: 1, sm: 2 },
       '@media (max-width:370px)': { 
-        p: 1 
+        p: 0.5 
       }
     }}>
       <Paper elevation={3} sx={{ 
-        p: 2,
+        p: { xs: 1, sm: 2 },
         '@media (max-width:370px)': { 
-          p: 1 
+          p: 0.5 
         }
       }}>
         <Stack direction="column" spacing={2} mb={2}>

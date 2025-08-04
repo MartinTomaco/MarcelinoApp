@@ -33,7 +33,7 @@ interface TabPanelProps {
 
 const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
   <div role="tabpanel" hidden={value !== index}>
-    {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    {value === index && <Box sx={{ p: { xs: 1, sm: 3 } }}>{children}</Box>}
   </div>
 );
 
@@ -226,8 +226,8 @@ export const Dashboard: React.FC = () => {
       marginRight: 'auto',
       boxSizing: 'border-box',
       display: 'block',
-      paddingLeft: 0,
-      paddingRight: 0,
+      paddingLeft: { xs: 0, sm: 0 },
+      paddingRight: { xs: 0, sm: 0 },
       height: '100vh',
       overflow: 'hidden'
     }}>
@@ -235,12 +235,23 @@ export const Dashboard: React.FC = () => {
         <Tabs 
           value={tabValue} 
           onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons={false}
           sx={{
+            minHeight: '40px',
             '& .MuiTabs-flexContainer': {
-              justifyContent: 'space-between'
+              justifyContent: 'space-between',
+              gap: { xs: 0, sm: 1 }
+            },
+            '& .MuiTab-root': {
+              minHeight: '40px',
+              padding: { xs: '6px 8px', sm: '12px 16px' },
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              minWidth: { xs: 'auto', sm: 'auto' },
+              flex: { xs: 1, sm: 'none' }
             },
             '& .MuiTab-root:last-child': {
-              marginLeft: 'auto'
+              marginLeft: { xs: 0, sm: 'auto' }
             }
           }}
         >
